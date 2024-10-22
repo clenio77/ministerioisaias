@@ -1,15 +1,18 @@
-import streamlit as st
+import os
 from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, LargeBinary
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from datetime import datetime
+import streamlit as st
 import base64
 import requests
 from io import BytesIO
 
 # Configuração do banco de dados
 Base = declarative_base()
-engine = create_engine('sqlite:///blog.db', echo=True)
+   
+# Use SQLite em memória para o Streamlit Cloud
+engine = create_engine('sqlite:///:memory:', echo=True)
 Session = sessionmaker(bind=engine)
 
 # Modelo de dados
@@ -20,7 +23,7 @@ class Post(Base):
     content = Column(Text, nullable=False)
     date_posted = Column(DateTime, nullable=False, default=datetime.utcnow)
     category = Column(String(20), nullable=False)
-    image = Column(LargeBinary, nullable=True)  # Novo campo para a imagem
+    image = Column(LargeBinary, nullable=True)
 
 # Criar tabelas
 Base.metadata.create_all(engine)
@@ -42,7 +45,6 @@ def get_posts():
 def add_example_posts():
     session = Session()
     if session.query(Post).count() == 0:
-        # Função para obter uma imagem de exemplo
         def get_example_image(url):
             response = requests.get(url)
             return BytesIO(response.content).read()
@@ -53,21 +55,21 @@ def add_example_posts():
                 content="Nesta semana, refletimos sobre o poder transformador do louvor em nossas vidas. O Salmo 22:3 nos diz que Deus habita nos louvores do seu povo. Quando louvamos, não apenas expressamos nossa gratidão, mas também convidamos a presença de Deus para nossas vidas...",
                 category="meditacao",
                 date_posted=datetime.now(),
-                image=get_example_image("https://example.com/path/to/meditation_image.jpg")
+                image=get_example_image("https://images.unsplash.com/photo-1515705576963-95cad62945b6?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80")
             ),
             Post(
                 title="Tutorial: Acordes Básicos no Violão",
                 content="Neste tutorial, vamos aprender os acordes básicos no violão que são essenciais para acompanhar muitos hinos e canções de louvor. Começaremos com os acordes de Dó (C), Sol (G) e Ré (D). Para formar o acorde de Dó, coloque o dedo indicador na primeira casa da segunda corda...",
                 category="tutorial",
                 date_posted=datetime.now(),
-                image=get_example_image("https://example.com/path/to/guitar_tutorial_image.jpg")
+                image=get_example_image("https://images.unsplash.com/photo-1510915361894-db8b60106cb1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80")
             ),
             Post(
                 title="Próximo Evento: Noite de Louvor e Adoração",
                 content="Estamos animados para anunciar nossa próxima Noite de Louvor e Adoração! O evento acontecerá no próximo sábado, às 19h, no salão principal da igreja. Teremos a participação especial do grupo de louvor 'Vozes para Cristo'. Venha se juntar a nós para uma noite de música, oração e comunhão...",
                 category="noticia",
                 date_posted=datetime.now(),
-                image=get_example_image("https://example.com/path/to/event_image.jpg")
+                image=get_example_image("https://images.unsplash.com/photo-1470225620780-dba8ba36b745?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80")
             )
         ]
         session.add_all(example_posts)
@@ -83,7 +85,7 @@ def get_image_base64(image):
 # Configuração da página
 st.set_page_config(page_title="Blog Ministério de Música Isaías", layout="wide")
 
-# CSS personalizado inspirado no Material Design
+# CSS personalizado
 st.markdown("""
 <style>
     body {
@@ -119,6 +121,10 @@ st.markdown("""
         color: #3700B3;
         font-weight: 400;
     }
+    .main-content {
+        max-width: 90%;
+        margin: auto;
+    }
     .post-card {
         background-color: white;
         border-radius: 4px;
@@ -141,61 +147,101 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+# Função para pesquisar posts
+def search_posts(query):
+    session = Session()
+    posts = session.query(Post).filter(
+        (Post.title.ilike(f'%{query}%')) | (Post.content.ilike(f'%{query}%'))
+    ).all()
+    session.close()
+    return posts
+
 # Interface do Streamlit
 st.title('Blog do Ministério de Música Isaías')
 
-menu = ['Home', 'Meditações', 'Tutoriais', 'Notícias e Eventos', 'Adicionar Post']
-choice = st.sidebar.selectbox('Menu', menu)
+# Criando a coluna lateral esquerda
+st.sidebar.title("Menu")
 
-# Adicione esta linha:
+menu = ['Home', 'Meditações', 'Tutoriais', 'Notícias e Eventos', 'Adicionar Post']
+choice = st.sidebar.radio('Navegação', menu)
+
+# Adicionar posts de exemplo
 add_example_posts()
 
-if choice == 'Home':
-    st.header('Posts Recentes')
-    posts = get_posts()
-    for post in posts:
-        with st.container():
-            image_b64 = get_image_base64(post.image)
-            image_html = f'<img src="data:image/png;base64,{image_b64}" style="max-width:100%; height:auto;">' if image_b64 else ''
-            st.markdown(f"""
-            <div class="post-card">
-                <h2>{post.title}</h2>
-                <p><em>{post.date_posted.strftime('%d/%m/%Y')}</em> 
-                <span class="category-chip">{post.category}</span></p>
-                {image_html}
-                <p>{post.content[:200]}...</p>
-                <a href="#" onclick="return false;">Leia mais</a>
-            </div>
-            """, unsafe_allow_html=True)
+# Criando o layout principal com três colunas
+col1, col2, col3 = st.columns([1, 6, 1])
 
-elif choice in ['Meditações', 'Tutoriais', 'Notícias e Eventos']:
-    st.header(choice)
-    category_map = {'Meditações': 'meditacao', 'Tutoriais': 'tutorial', 'Notícias e Eventos': 'noticia'}
-    posts = [post for post in get_posts() if post.category == category_map[choice]]
-    for post in posts:
-        with st.container():
-            image_b64 = get_image_base64(post.image)
-            image_html = f'<img src="data:image/png;base64,{image_b64}" style="max-width:100%; height:auto;">' if image_b64 else ''
-            st.markdown(f"""
-            <div class="post-card">
-                <h2>{post.title}</h2>
-                <p><em>{post.date_posted.strftime('%d/%m/%Y')}</em></p>
-                {image_html}
-                <p>{post.content}</p>
-            </div>
-            """, unsafe_allow_html=True)
+# Coluna central (conteúdo principal)
+with col2:
+    st.markdown('<div class="main-content">', unsafe_allow_html=True)
+    if choice == 'Home':
+        st.header('Posts Recentes')
+        posts = get_posts()
+        for post in posts:
+            with st.container():
+                image_b64 = get_image_base64(post.image)
+                image_html = f'<img src="data:image/png;base64,{image_b64}" style="max-width:100%; height:auto;">' if image_b64 else ''
+                st.markdown(f"""
+                <div class="post-card">
+                    <h2>{post.title}</h2>
+                    <p><em>{post.date_posted.strftime('%d/%m/%Y')}</em> 
+                    <span class="category-chip">{post.category}</span></p>
+                    {image_html}
+                    <p>{post.content[:200]}...</p>
+                    <a href="#" onclick="return false;">Leia mais</a>
+                </div>
+                """, unsafe_allow_html=True)
 
-elif choice == 'Adicionar Post':
-    st.header('Adicionar Novo Post')
-    col1, col2 = st.columns(2)
-    with col1:
-        title = st.text_input('Título')
-        category = st.selectbox('Categoria', ['meditacao', 'tutorial', 'noticia'])
-    with col2:
-        content = st.text_area('Conteúdo', height=200)
-    if st.button('Adicionar Post'):
-        add_post(title, content, category)
-        st.success('Post adicionado com sucesso!')
+    elif choice in ['Meditações', 'Tutoriais', 'Notícias e Eventos']:
+        st.header(choice)
+        category_map = {'Meditações': 'meditacao', 'Tutoriais': 'tutorial', 'Notícias e Eventos': 'noticia'}
+        posts = [post for post in get_posts() if post.category == category_map[choice]]
+        for post in posts:
+            with st.container():
+                image_b64 = get_image_base64(post.image)
+                image_html = f'<img src="data:image/png;base64,{image_b64}" style="max-width:100%; height:auto;">' if image_b64 else ''
+                st.markdown(f"""
+                <div class="post-card">
+                    <h2>{post.title}</h2>
+                    <p><em>{post.date_posted.strftime('%d/%m/%Y')}</em></p>
+                    {image_html}
+                    <p>{post.content}</p>
+                </div>
+                """, unsafe_allow_html=True)
+
+    elif choice == 'Adicionar Post':
+        st.header('Adicionar Novo Post')
+        col1, col2 = st.columns(2)
+        with col1:
+            title = st.text_input('Título')
+            category = st.selectbox('Categoria', ['meditacao', 'tutorial', 'noticia'])
+            uploaded_file = st.file_uploader("Escolha uma imagem", type=['png', 'jpg', 'jpeg'])
+        with col2:
+            content = st.text_area('Conteúdo', height=200)
+        if st.button('Adicionar Post'):
+            if uploaded_file is not None:
+                image = uploaded_file.read()
+            else:
+                image = None
+            add_post(title, content, category, image)
+            st.success('Post adicionado com sucesso!')
+    
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# Coluna lateral direita
+with col3:
+    st.subheader("Pesquisar")
+    search_query = st.text_input("Buscar no blog")
+    if search_query:
+        search_results = search_posts(search_query)
+        st.write(f"Resultados da pesquisa para '{search_query}':")
+        for post in search_results:
+            st.write(f"- [{post.title}]('#')")
+
+    st.subheader("Últimos Posts")
+    recent_posts = get_posts()[:5]  # Pegando os 5 posts mais recentes
+    for post in recent_posts:
+        st.write(f"- [{post.title}]('#')")
 
 # Rodapé
 st.markdown("""
