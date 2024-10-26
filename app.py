@@ -64,64 +64,52 @@ st.markdown("""
 <style>
     body {
         font-family: 'Helvetica Neue', Arial, sans-serif;
-        background-color: #f5f5f7;
+        background-color: #F5F5F5;  /* Cinza claro, neutro e acolhedor */
         margin: 0;
         padding: 0;
     }
     .header {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        background: white;
-        padding-top: 50px;  /* Padding ao redor da div */
+        background: #8B4513;  /* Marrom escuro, simbolizando estabilidade */
+        margin: 0;  /* Remove qualquer margem */
+        padding: 0;  /* Remove qualquer padding */
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         z-index: 1000;
     }
     .header h1 {
         margin: 0;  /* Remove a margem padrão do h1 */
-        padding: 10px 0;  /* Diminui o padding vertical do h1 */
+        padding: 10px 0;  /* Ajuste o padding vertical do h1, se necessário */
         text-align: center;
-        color: #333;
+        color: #FFFFFF;  /* Branco para contraste */
         font-size: 2.5em;
     }
     .container {
         max-width: 800px;
         margin: 100px auto 20px;  /* Aumenta a margem superior para evitar sobreposição com o cabeçalho fixo */
         padding: 20px;
-        background: white;
+        background: #FFFFFF;  /* Branco, para clareza */
         border-radius: 12px;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
     }
-    h1 {
+    h1, h2, h3, h4, h5, h6 {  /* Centraliza todos os cabeçalhos */
         text-align: center;
-        color: #333;
-        font-size: 2.5em;
-        margin: 0;
+        color: #003366;  /* Azul escuro, simbolizando confiança e serenidade */
     }
     .card {
-        background: #fff;
+        background: #FAFAD2;  /* Amarelo claro, simbolizando alegria */
         border-radius: 12px;
         padding: 20px;
         margin: 15px 0;
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         transition: transform 0.2s;
     }
-    .card:hover {
-        transform: translateY(-5px);
-    }
     .card-title {
-        text-align:center;
+        text-align: center;
         font-size: 1.8em;
         margin: 0;
-        color: #007aff;
-    }
-    .card-content {
-        margin: 10px 0;
-        color: #555;
+        color: #8B0000;  /* Vermelho escuro, simbolizando amor e sacrifício */
     }
     .btn {
-        background-color: #007aff;
+        background-color: #006400;  /* Verde escuro, simbolizando esperança */
         color: white;
         padding: 10px 15px;
         border: none;
@@ -131,28 +119,32 @@ st.markdown("""
         transition: background-color 0.3s;
     }
     .btn:hover {
-        background-color: #005bb5;
-    }
-    .sidebar {
-        background: #f8f9fa;
-        padding: 20px;
-        border-radius: 12px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    }
-    .input-field {
-        margin-bottom: 20px;
-    }
-    .input-field input, .input-field textarea {
-        border: 1px solid #ccc;
-        border-radius: 5px;
-        padding: 10px;
-        width: 100%;
-        box-sizing: border-box;
+        background-color: #228B22;  /* Verde mais claro */
     }
     .input-field label {
         margin-bottom: 5px;
         font-weight: bold;
-        color: #333;
+        color: #003366;  /* Azul escuro */
+    }
+    .whatsapp-icon {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background-color: #25D366; /* Cor do WhatsApp */
+        border-radius: 50%;
+        padding: 10px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        z-index: 1000;
+        text-align: center;
+        transition: background-color 0.3s, transform 0.3s;
+    }
+    .whatsapp-icon:hover {
+        background-color: #128C7E; /* Cor do WhatsApp ao passar o mouse */
+        transform: scale(1.1); /* Aumenta o ícone ao passar o mouse */
+    }
+    .whatsapp-icon img {
+        width: 50px; /* Tamanho do ícone */
+        height: 50px; /* Tamanho do ícone */
     }
 </style>
 """, unsafe_allow_html=True)
@@ -176,7 +168,7 @@ st.markdown("""
 
 # Criando a coluna lateral esquerda
 st.sidebar.title("Menu")
-menu = ["Home", "Meditações", "Tutoriais", "Notícias e Eventos", "Adicionar Post", "Contato"]
+menu = ["Home", "Meditações", "Tutoriais", "Notícias e Eventos", "Adicionar Post", "Contato", "Vídeos"]
 choice = st.sidebar.selectbox("Menu", menu)
 
 # Conteúdo principal
@@ -220,38 +212,79 @@ elif choice == "Contato":
     col1, col2 = st.columns(2)
     
     with col1:
-        st.subheader("Formulário de Contato")
-        contact_form = """
-        <form action="https://formsubmit.co/ministeriomusicaisaias@gmail.com" method="POST" class="contact-form">
-            <input type="hidden" name="_captcha" value="false">
-            <div class="input-field">
-                <label for="name">Nome</label>
-                <input type="text" name="name" id="name" required>
-            </div>
-            <div class="input-field">
-                <label for="email">Email</label>
-                <input type="email" name="email" id="email" required>
-            </div>
-            <div class="input-field">
-                <label for="message">Mensagem</label>
-                <textarea name="message" id="message" required></textarea>
-            </div>
-            <button type="submit" class="btn">Enviar</button>
-        </form>
-        """
-        st.markdown(contact_form, unsafe_allow_html=True)
+
+
+        # Inicializar os campos do formulário no estado da sessão
+        if 'name' not in st.session_state:
+            st.session_state.name = ""
+        if 'email' not in st.session_state:
+            st.session_state.email = ""
+        if 'message' not in st.session_state:
+            st.session_state.message = ""
+
+        # Campos do formulário
+        name = st.text_input("Nome", value=st.session_state.name, key="name_input")
+        email = st.text_input("Email", value=st.session_state.email, key="email_input")
+        message = st.text_area("Mensagem", value=st.session_state.message, key="message_input")
+
+        # Botão de envio
+        if st.button("Enviar"):
+            if name and email and message:  # Verifica se todos os campos estão preenchidos
+                # Formulário HTML para enviar os dados
+                form_html = f"""
+                <form action="https://formsubmit.co/ministeriomusicaisaias@gmail.com" method="POST" style="display: none;">
+                    <input type="text" name="name" value="{name}" required>
+                    <input type="email" name="email" value="{email}" required>
+                    <textarea name="message" required>{message}</textarea>
+                </form>
+                <script>
+                    document.forms[0].submit();
+                </script>
+                """
+                st.markdown(form_html, unsafe_allow_html=True)
+
+                st.session_state['form_submitted'] = True  # Marca que o formulário foi enviado
+                st.success("Mensagem enviada com sucesso!")  # Mensagem de sucesso
+
+                # Limpar os campos
+                st.session_state.name = ""
+                st.session_state.email = ""
+                st.session_state.message = ""
+
+                # Atualizar os campos para refletir a limpeza
+                name = ""
+                email = ""
+                message = ""
+            else:
+                st.error("Por favor, preencha todos os campos.")
 
     with col2:
-        st.subheader("Redes Sociais")
+        st.markdown("<h2 style='text-align: center;'>Redes Sociais</h2>", unsafe_allow_html=True)
         st.markdown("""
-        * [Facebook](https://www.facebook.com/seu_perfil)
-        * [Instagram](https://www.instagram.com/seu_perfil)
-        * [YouTube](https://www.youtube.com/seu_canal)
-        * [Twitter](https://twitter.com/seu_perfil)
-        """)
-        
-        st.subheader("Email")
-        st.markdown("ministeriomusicaisaias@gmail.com")
+        <div style="text-align: center;">
+            * <a href="https://www.facebook.com/seu_perfil">Facebook</a><br>
+            * <a href="https://www.instagram.com/seu_perfil">Instagram</a><br>
+            * <a href="https://www.youtube.com/seu_canal">YouTube</a><br>
+            * <a href="https://twitter.com/seu_perfil">Twitter</a>
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.markdown("<h2 style='text-align: center;'>Email</h2>", unsafe_allow_html=True)
+        st.markdown("<div style='text-align: center;'>ministeriomusicaisaias@gmail.com</div>", unsafe_allow_html=True)
+
+elif choice == 'Vídeos':
+    st.header("Vídeos do Ministério de Música Isaías")
+
+    # Lista de links dos vídeos do YouTube
+    video_links = [
+        "https://www.youtube.com/watch?v=syy3xDlaWoA",  # Substitua VIDEO_ID_1 pelo ID do seu vídeo
+        "https://www.youtube.com/watch?v=c_pBavHAkaY",  # Substitua VIDEO_ID_2 pelo ID do seu vídeo
+        "https://www.youtube.com/shorts/Ot-8HL6NoZQ",  # Substitua VIDEO_ID_3 pelo ID do seu vídeo
+    ]
+
+    # Exibir os vídeos
+    for link in video_links:
+        st.video(link)
 
 else:
     # Criando o layout principal com duas colunas
@@ -361,12 +394,12 @@ if 'selected_post_id' in st.session_state:
     selected_post_id = st.session_state.selected_post_id
     #st.write(f"Post selecionado ID: {selected_post_id}")  # Para depuração
     post = Session().query(Post).filter(Post.id == selected_post_id).first()
-    
 
-
-
-
-
-
-
+# Adicionar o ícone do WhatsApp
+whatsapp_number = "5534998264603"  # Substitua pelo número do WhatsApp do blog (inclua o código do país)
+st.markdown(f"""
+<a href="https://wa.me/{whatsapp_number}" class="whatsapp-icon" target="_blank">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp">
+</a>
+""", unsafe_allow_html=True)
 
